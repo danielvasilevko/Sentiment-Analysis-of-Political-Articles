@@ -1,0 +1,870 @@
+---
+title: "Project"
+author: "Daniel Vasilevko"
+date: "2026-02-20"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r}
+library(jsonlite)
+library(tibble)
+library(dplyr)
+library(tidytext)
+library(ggplot2)
+library(broom)
+library(tidyr)
+library(lexicon)
+library(stringr)
+```
+
+```{r}
+data <- stream_in(file("News.json"))
+```
+
+```{r}
+news_tbl <- as_tibble(data)
+head(news_tbl)
+unique(news_tbl$category)
+
+news_tbl %>%
+  filter(category == "TRAVEL") %>%
+  nrow()
+
+dim(news_tbl)
+
+head(news_tbl)
+```
+
+# Pie Chart Template
+
+```{r}
+world_tbl <- news_tbl %>%
+  filter(category == "WORLD NEWS")
+
+world_words <- world_tbl %>%
+  select(link, headline) %>%
+  unnest_tokens(word, headline)
+
+bing <- get_sentiments("bing")
+
+headline_sentiment <- world_words %>%
+  inner_join(bing, by = "word")
+
+headline_scores <- headline_sentiment %>%
+  count(link, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(score = positive - negative)
+
+headline_scores <- headline_scores %>%
+  mutate(label = case_when(
+    score > 0 ~ "Positive",
+    score < 0 ~ "Negative",
+    TRUE ~ "Neutral"
+  ))
+
+pie_data <- headline_scores %>%
+  count(label)
+
+pie_data <- pie_data %>%
+  mutate(
+    percent = round(100 * n / sum(n), 1),
+    label_text = paste0(label, " (", percent, "%)")
+  )
+
+pie_data <- pie_data %>%
+  mutate(label = factor(label,
+                        levels = c("Negative", "Neutral", "Positive")))
+
+ggplot(pie_data, aes(x = "", y = n, fill = label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label_text),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Negative" = "#E63946",  
+    "Neutral"  = "#F1FAEE", 
+    "Positive" = "#1D9BF0"   
+  )) +
+  theme_void() +
+  labs(
+    title = "Sentiment Distribution of World News Headlines",
+    fill = "Sentiment"
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "bottom", text = element_text(family = "Helvetica")
+  )
+```
+
+```{r, echo= FALSE}
+world_tbl <- news_tbl %>%
+  filter(category == "U.S. NEWS")
+
+world_words <- world_tbl %>%
+  select(link, headline) %>%
+  unnest_tokens(word, headline)
+
+bing <- get_sentiments("bing")
+
+headline_sentiment <- world_words %>%
+  inner_join(bing, by = "word")
+
+library(tidyr)
+
+headline_scores <- headline_sentiment %>%
+  count(link, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(score = positive - negative)
+
+headline_scores <- headline_scores %>%
+  mutate(label = case_when(
+    score > 0 ~ "Positive",
+    score < 0 ~ "Negative",
+    TRUE ~ "Neutral"
+  ))
+
+pie_data <- headline_scores %>%
+  count(label)
+
+pie_data <- pie_data %>%
+  mutate(
+    percent = round(100 * n / sum(n), 1),
+    label_text = paste0(label, " (", percent, "%)")
+  )
+
+pie_data <- pie_data %>%
+  mutate(label = factor(label,
+                        levels = c("Negative", "Neutral", "Positive")))
+
+ggplot(pie_data, aes(x = "", y = n, fill = label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label_text),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Negative" = "#E63946",  
+    "Neutral"  = "#F1FAEE", 
+    "Positive" = "#1D9BF0"   
+  )) +
+  theme_void() +
+  labs(
+    title = "Sentiment Distribution of U.S. News Headlines",
+    fill = "Sentiment"
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "bottom", text = element_text(family = "Helvetica")
+  )
+```
+
+
+```{r,echo=FALSE}
+world_tbl <- news_tbl %>%
+  filter(category == "ENTERTAINMENT")
+
+world_words <- world_tbl %>%
+  select(link, headline) %>%
+  unnest_tokens(word, headline)
+
+bing <- get_sentiments("bing")
+
+headline_sentiment <- world_words %>%
+  inner_join(bing, by = "word")
+
+library(tidyr)
+
+headline_scores <- headline_sentiment %>%
+  count(link, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(score = positive - negative)
+
+headline_scores <- headline_scores %>%
+  mutate(label = case_when(
+    score > 0 ~ "Positive",
+    score < 0 ~ "Negative",
+    TRUE ~ "Neutral"
+  ))
+
+pie_data <- headline_scores %>%
+  count(label)
+
+pie_data <- pie_data %>%
+  mutate(
+    percent = round(100 * n / sum(n), 1),
+    label_text = paste0(label, " (", percent, "%)")
+  )
+
+pie_data <- pie_data %>%
+  mutate(label = factor(label,
+                        levels = c("Negative", "Neutral", "Positive")))
+
+ggplot(pie_data, aes(x = "", y = n, fill = label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label_text),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Negative" = "#E63946",  
+    "Neutral"  = "#F1FAEE", 
+    "Positive" = "#1D9BF0"   
+  )) +
+  theme_void() +
+  labs(
+    title = "Sentiment Distribution of Entertainment Headlines",
+    fill = "Sentiment"
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "bottom", text = element_text(family = "Helvetica")
+  )
+```
+
+```{r,echo=FALSE}
+world_tbl <- news_tbl %>%
+  filter(category == "TRAVEL")
+
+world_words <- world_tbl %>%
+  select(link, headline) %>%
+  unnest_tokens(word, headline)
+
+bing <- get_sentiments("bing")
+
+headline_sentiment <- world_words %>%
+  inner_join(bing, by = "word")
+
+library(tidyr)
+
+headline_scores <- headline_sentiment %>%
+  count(link, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(score = positive - negative)
+
+headline_scores <- headline_scores %>%
+  mutate(label = case_when(
+    score > 0 ~ "Positive",
+    score < 0 ~ "Negative",
+    TRUE ~ "Neutral"
+  ))
+
+pie_data <- headline_scores %>%
+  count(label)
+
+pie_data <- pie_data %>%
+  mutate(
+    percent = round(100 * n / sum(n), 1),
+    label_text = paste0(label, " (", percent, "%)")
+  )
+
+pie_data <- pie_data %>%
+  mutate(label = factor(label,
+                        levels = c("Negative", "Neutral", "Positive")))
+
+ggplot(pie_data, aes(x = "", y = n, fill = label)) +
+  geom_col(width = 1, color = "white") +
+  coord_polar(theta = "y") +
+  geom_text(aes(label = label_text),
+            position = position_stack(vjust = 0.5),
+            size = 4,
+            fontface = "bold") +
+  scale_fill_manual(values = c(
+    "Negative" = "#E63946",  
+    "Neutral"  = "#F1FAEE", 
+    "Positive" = "#1D9BF0"   
+  )) +
+  theme_void() +
+  labs(
+    title = "Sentiment Distribution of Travel Headlines",
+    fill = "Sentiment"
+  ) +
+  theme(
+    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+    legend.position = "bottom", text = element_text(family = "Helvetica")
+  )
+```
+
+# Headline Pos/Neg Scoring Bing
+
+```{r}
+relevant_tbl <- news_tbl %>%
+  filter(category %in% c("WORLD NEWS", "U.S. NEWS", "TRAVEL", "ENTERTAINMENT"))
+
+relevant_words <- relevant_tbl %>%
+  select(link, headline, category) %>%
+  unnest_tokens(word, headline)
+
+bing <- get_sentiments("bing")
+
+headline_sentiment <- relevant_words %>%
+  inner_join(bing, by = "word")
+
+headline_scores <- headline_sentiment %>%
+  count(link, category, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(score = positive - negative) %>%
+  mutate(label = case_when(
+    score > 0 ~ "Positive",
+    score < 0 ~ "Negative",
+    TRUE ~ "Neutral"
+  ))
+
+headline_scores
+```
+
+# Headline NRC Emotion Words Linear Reg
+
+```{r}
+nrc <- get_sentiments("nrc")
+
+headline_words <- relevant_tbl %>%
+  select(link, headline, category) %>%
+  unnest_tokens(word, headline)
+
+headline_nrc <- headline_words %>%
+  inner_join(nrc, by = "word")
+
+headline_emotions <- headline_nrc %>%
+  count(link, category, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  )
+
+headline_emotions <- headline_emotions %>%
+  mutate(new_category = case_when(
+    category %in% c("WORLD NEWS", "U.S. NEWS") ~ "News",
+    category %in% c("ENTERTAINMENT", "TRAVEL") ~ "General",
+    TRUE ~ category  
+  ))
+
+head(headline_emotions)
+
+model_anger <- lm(anger ~ new_category, data = headline_emotions)
+summary(model_anger)
+tidy(model_anger)
+
+model_disgust <- lm(disgust ~ new_category, data = headline_emotions)
+summary(model_disgust)
+tidy(model_disgust)
+
+model_fear <- lm(fear ~ new_category, data = headline_emotions)
+summary(model_fear)
+tidy(model_fear)
+
+model_sadness <- lm(sadness ~ new_category, data = headline_emotions)
+summary(model_sadness)
+tidy(model_sadness)
+
+model_joy <- lm(joy ~ new_category, data = headline_emotions)
+summary(model_joy)
+tidy(model_joy)
+
+model_anticipation <- lm(anticipation ~ new_category, data = headline_emotions)
+summary(model_anticipation)
+tidy(model_anticipation)
+
+model_surprise <- lm(surprise ~ new_category, data = headline_emotions)
+summary(model_surprise)
+tidy(model_surprise)
+
+model_trust <- lm(trust ~ new_category, data = headline_emotions)
+summary(model_trust)
+tidy(model_trust)
+
+
+```
+
+```{r}
+emotion_data_all <- headline_emotions %>%
+  mutate(new_category = case_when(
+    category %in% c("WORLD NEWS", "U.S. NEWS") ~ "Hard News",
+    category %in% c("ENTERTAINMENT", "TRAVEL") ~ "Lifestyle News"
+  )) %>%
+    pivot_longer(
+    cols = -c(link, category, new_category),
+    names_to = "emotion",
+    values_to = "count"
+  ) %>%
+  group_by(new_category, emotion) %>%
+  summarise(avg_count = mean(count), .groups = "drop")
+
+ggplot(emotion_data_all, aes(x = emotion, y = avg_count, fill = new_category)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  scale_fill_manual(values = c("Hard News" = "#E63946", "Lifestyle News" = "#1D9BF0")) + 
+  labs(
+    title = "Mean Emotive Words per Headline by Category",
+    x = "Emotion",
+    y = "Average Count of Words",
+    fill = "Category"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    text = element_text(family = "Helvetica", color = "white"),
+    plot.title = element_text(face = "bold", hjust = 0.5, color = "white"),
+    axis.text = element_text(color = "white"),
+    axis.title = element_text(color = "white"),
+    legend.text = element_text(color = "white"),
+    legend.title = element_text(color = "white"),
+    
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "top",
+
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    panel.background = element_rect(fill = "#1d3159", color = NA),
+    plot.background = element_rect(fill = "#1d3159", color = NA),
+    legend.background = element_rect(fill = "#1d3159", color = NA),
+    legend.key = element_rect(fill = "#1d3159", color = NA)
+  )
+```
+
+# Hard vs Soft News Pos/Neg Linear Regression
+
+```{r}
+headline_scores <- headline_scores %>%
+  mutate(new_category = case_when(
+    category %in% c("WORLD NEWS", "U.S. NEWS") ~ "Hard News",
+    category %in% c("ENTERTAINMENT", "TRAVEL") ~ "General News",
+    TRUE ~ category  
+  ))
+
+table(headline_scores$new_category)
+
+model <- lm(score ~ new_category, data = headline_scores)
+
+summary(model)
+
+tidy(model)
+```
+
+# Headline and Summary Pos/Neg Scoring
+
+```{r}
+relevant_tbl <- news_tbl %>%
+  filter(category %in% c("WORLD NEWS", "U.S. NEWS", "TRAVEL", "ENTERTAINMENT"))
+
+bing <- get_sentiments("bing")
+
+headline_scores <- relevant_tbl %>%
+  select(link, headline, category) %>%
+  unnest_tokens(word, headline) %>%
+  inner_join(bing, by = "word") %>%
+  count(link, category, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(headline_score = positive - negative) %>%
+  select(-positive, -negative)  
+
+summary_scores <- relevant_tbl %>%
+  select(link, short_description) %>%
+  unnest_tokens(word, short_description) %>%
+  inner_join(bing, by = "word") %>%
+  count(link, sentiment) %>%
+  pivot_wider(
+    names_from = sentiment,
+    values_from = n,
+    values_fill = 0
+  ) %>%
+  mutate(article_score = positive - negative) %>%
+  select(link, article_score)
+
+combined_scores <- headline_scores %>%
+  left_join(summary_scores, by = "link")
+
+combined_scores <- combined_scores %>%
+  mutate(article_score = replace_na(article_score, 0))
+
+combined_scores
+```
+
+# Headline Summary Pos/Neg T-Test
+
+```{r}
+hard_news <- combined_scores %>%
+  filter(category %in% c("WORLD NEWS", "U.S. NEWS"))
+
+hard_news <- hard_news %>%
+  mutate(diff = headline_score- article_score )
+
+t.test(hard_news$headline_score,
+       hard_news$article_score,
+       paired = TRUE)
+
+general_news <- combined_scores %>%
+  filter(category %in% c("TRAVEL", "ENTERTAINMENT"))
+
+t.test(general_news$headline_score,
+       general_news$article_score,
+       paired = TRUE)
+
+```
+
+# Headline Summary Pos/Neg Linear Regression
+
+```{r}
+combined_scores <- combined_scores %>%
+  mutate(
+    group = ifelse(category %in% c("WORLD NEWS", "U.S. NEWS"),
+                   "Hard News",
+                   "General News"),
+    diff = headline_score - article_score
+  )
+
+summary(lm(diff ~ group, data = combined_scores))
+
+group_means <- combined_scores %>%
+  group_by(group) %>%
+  summarise(
+    mean_diff = mean(diff),
+    mean_headline = mean(headline_score),
+    mean_summary = mean(article_score)
+  )
+
+ggplot(combined_scores, aes(x = group, y = diff)) +
+  geom_jitter(width = 0.2, alpha = 0.2, color = "#1D9BF0") + 
+  geom_point(data = group_means, aes(x = group, y = mean_diff), color = "#E63946", size = 4) + 
+  geom_hline(yintercept = 0, linetype = "dashed", color = "white") +
+  labs(
+    title = "Headline vs Summary Sentiment Difference by Category",
+    x = "Category",
+    y = "Headline - Summary Sentiment Score"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    text = element_text(family = "Helvetica", color = "white"),
+    plot.title = element_text(face = "bold", hjust = 0.5, color = "white"),
+    axis.text = element_text(color = "white"),
+    axis.title = element_text(color = "white"),
+
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    panel.background = element_rect(fill = "#1d3159", color = NA),
+    plot.background = element_rect(fill = "#1d3159", color = NA)
+  )
+```
+
+# Headline Hard vs Soft News Intensifier Scoring
+
+```{r}
+additional_intensifiers <- c(
+  "amazingly",
+  "astonishingly",
+  "astoundingly",
+  "blatantly",
+  "dramatically",
+  "drastically",
+  "enormous",
+  "enormously",
+  "exceedingly",
+  "extraordinarily",
+  "fantastically",
+  "frightfully",
+  "gigantic",
+  "gigantically",
+  "inordinately",
+  "insanely",
+  "intensely",
+  "literally",
+  "mind-blowingly",
+  "notably",
+  "outrageously",
+  "phenomenal",
+  "phenomenally",
+  "profoundly",
+  "radically",
+  "remarkably",
+  "ridiculously",
+  "sharply",
+  "significantly",
+  "staggeringly",
+  "substantially",
+  "supremely",
+  "tremendous",
+  "tremendously",
+  "unbelievably",
+  "undeniably",
+  "unusually",
+  "utter",
+  "utterly",
+  "vast",
+  "vastly",
+  "wildly"
+)
+
+shifters <- hash_valence_shifters
+
+custom_intensifiers <- unique(c(
+  hash_valence_shifters %>% 
+    filter(y == 2) %>% 
+    pull(x),
+  additional_intensifiers
+))
+
+custom_shifters <- tibble(
+  x = additional_intensifiers,
+  y = "2"
+)
+
+shifters <- bind_rows(shifters, custom_shifters) %>%
+  distinct(x, .keep_all = TRUE)
+
+```
+
+```{r}
+# https://www.rdocumentation.org/packages/lexicon/versions/1.2.1/topics/hash_valence_shifters
+relevant_tbl <- news_tbl %>%
+  filter(category %in% c("WORLD NEWS", "U.S. NEWS",
+                         "TRAVEL", "ENTERTAINMENT"))
+
+relevant_words <- relevant_tbl %>%
+  select(link, headline, category) %>%
+  unnest_tokens(word, headline)
+
+headline_intensifiers <- relevant_words %>%
+  inner_join(shifters, by = c("word" = "x")) %>%
+  filter(y == 2)
+
+headline_intensifier_counts <- headline_intensifiers %>%
+  count(link, category) %>%
+  rename(intensifiers = n)
+
+headline_intensifier_counts <- relevant_tbl %>%
+  select(link, category) %>%
+  distinct() %>%
+  left_join(headline_intensifier_counts,
+            by = c("link", "category")) %>%
+  mutate(intensifiers = ifelse(is.na(intensifiers), 0, intensifiers))
+
+headline_intensifier_counts <- headline_intensifier_counts %>%
+  mutate(new_category = case_when(
+    category %in% c("WORLD NEWS", "U.S. NEWS") ~ "Hard News",
+    category %in% c("ENTERTAINMENT", "TRAVEL") ~ "General News"
+  ))
+
+intense <- shifters[shifters$y ==2]
+
+```
+
+```{r}
+headline_intensifier_counts <- headline_intensifier_counts %>%
+  mutate(has_intensifier = ifelse(intensifiers > 0, 1, 0))
+
+prop_data <- headline_intensifier_counts %>%
+  group_by(new_category) %>%
+  summarise(
+    proportion = mean(has_intensifier)
+  )
+
+ggplot(prop_data,
+       aes(x = new_category, y = proportion, fill = new_category)) +
+  geom_col(width = 0.6) +
+  scale_fill_manual(values = c(
+    "Hard News" = "#1D9BF0",
+    "General News" = "#E63946"
+  )) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Proportion of Headlines Containing Intensifiers",
+    x = "Category",
+    y = "Percentage of Headlines"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    text = element_text(family = "Helvetica", color = "white"),
+    plot.title = element_text(face = "bold", hjust = 0.5, color = "white"),
+    axis.text = element_text(color = "white"),
+    axis.title = element_text(color = "white"),
+
+    legend.position = "none",
+
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    panel.background = element_rect(fill = "#1d3159", color = NA),
+    plot.background = element_rect(fill = "#1d3159", color = NA)
+  )
+```
+
+# Headline Hard vs Soft News Intensifier Linear Regression
+
+```{r}
+model <- lm(intensifiers ~ new_category,
+            data = headline_intensifier_counts)
+
+summary(model)
+```
+
+# Headline Hard vs Soft News Downtoner Scoring
+
+```{r}
+headline_downtoner <- relevant_words %>%
+  inner_join(shifters, by = c("word" = "x")) %>%
+  filter(y == 3)
+
+headline_downtoner_counts <- headline_downtoner %>%
+  count(link, category) %>%
+  rename(downtoner = n)
+
+headline_downtoner_counts <- relevant_tbl %>%
+  select(link, category) %>%
+  distinct() %>%
+  left_join(headline_downtoner_counts,
+            by = c("link", "category")) %>%
+  mutate(downtoner = ifelse(is.na(downtoner), 0, downtoner))
+
+headline_downtoner_counts <- headline_downtoner_counts %>%
+  mutate(new_category = case_when(
+    category %in% c("WORLD NEWS", "U.S. NEWS") ~ "Hard News",
+    category %in% c("ENTERTAINMENT", "TRAVEL") ~ "General News"
+  ))
+
+```
+
+
+```{r}
+headline_downtoner_counts <- headline_downtoner_counts %>%
+  mutate(has_downtoner = ifelse(downtoner > 0, 1, 0))
+
+prop_downtoner <- headline_downtoner_counts %>%
+  group_by(new_category) %>%
+  summarise(
+    proportion = mean(has_downtoner)
+  )
+
+ggplot(prop_downtoner,
+       aes(x = new_category, y = proportion, fill = new_category)) +
+  geom_col(width = 0.6) +
+  scale_fill_manual(values = c(
+    "Hard News" = "#1D9BF0",
+    "General News" = "#E63946"
+  )) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
+  labs(
+    title = "Proportion of Headlines Containing Downtoners",
+    x = "Category",
+    y = "Percentage of Headlines"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    text = element_text(family = "Helvetica", color = "white"),
+    plot.title = element_text(face = "bold", hjust = 0.5, color = "white"),
+    axis.text = element_text(color = "white"),
+    axis.title = element_text(color = "white"),
+
+    legend.position = "none",
+
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+
+    panel.background = element_rect(fill = "#1d3159", color = NA),
+    plot.background = element_rect(fill = "#1d3159", color = NA)
+  )
+```
+
+
+# Headline Hard vs Soft News Downtoner Linear Regression
+
+
+```{r}
+model <- lm(downtoner ~ new_category,
+            data = headline_downtoner_counts)
+
+summary(model)
+```
+
+# Word Clouds
+
+```{r}
+library(dplyr)
+library(tidytext)
+library(wordcloud)
+library(RColorBrewer)
+library(stringr)
+
+headline_words <- relevant_tbl %>%
+  select(link, headline, category) %>%
+  unnest_tokens(word, headline) %>%
+  mutate(new_category = case_when(
+    category %in% c("WORLD NEWS", "U.S. NEWS") ~ "News",
+    category %in% c("ENTERTAINMENT", "TRAVEL") ~ "General"
+  ))
+
+data("stop_words")
+headline_words <- headline_words %>%
+  anti_join(stop_words, by = "word") %>%
+  filter(!str_detect(word, "^[0-9]+$"))  # remove words that are only numbers
+
+
+set.seed(123)
+
+par(bg = "#1d3159")
+
+news_words <- headline_words %>% filter(new_category == "News")
+
+news_words %>%
+  count(word, sort = TRUE) %>%
+  with(wordcloud(
+    words = word,
+    freq = n,
+    max.words = 100,
+    colors = brewer.pal(8, "RdYlBu"),
+    random.order = FALSE
+  ))
+
+set.seed(123)
+
+par(bg = "#1d3159")
+
+
+general_words <- headline_words %>% filter(new_category == "General")
+
+general_words %>%
+  count(word, sort = TRUE) %>%
+  with(wordcloud(
+    words = word,
+    freq = n,
+    max.words = 100,
+    scale = c(3, 0.35),
+    colors = brewer.pal(8, "RdYlBu"),
+    random.order = FALSE
+  ))
+```
+
+
+
+
+
